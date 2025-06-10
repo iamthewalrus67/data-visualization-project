@@ -1,0 +1,80 @@
+Commodity_Description,Calendar_Year,Attribute_Description,Value
+Barley,2006,Exports,12889.0
+Barley,2010,Exports,2883.0
+Barley,2011,Exports,15935.0
+Barley,2017,Exports,19994.0
+Barley,2018,Exports,16698.0
+Barley,2019,Exports,4289.0
+Barley,2021,Exports,3561.0
+Barley,2022,Exports,4984.0
+Barley,2023,Exports,9892.0
+Barley,2025,Exports,11094.0
+Corn,2006,Exports,6652.0
+Corn,2011,Exports,6036.0
+Corn,2015,Exports,3101.0
+Corn,2017,Exports,63515.0
+Corn,2019,Exports,19661.0
+Corn,2020,Exports,115215.0
+Corn,2021,Exports,23864.0
+Corn,2023,Exports,26980.0
+Corn,2025,Exports,102610.0
+Millet,2006,Exports,0.0
+Millet,2011,Exports,0.0
+Millet,2013,Exports,0.0
+Millet,2014,Exports,0.0
+Millet,2015,Exports,0.0
+Millet,2016,Exports,0.0
+Millet,2018,Exports,0.0
+Millet,2019,Exports,0.0
+Millet,2020,Exports,0.0
+Millet,2021,Exports,0.0
+Millet,2022,Exports,0.0
+Millet,2023,Exports,0.0
+Millet,2024,Exports,0.0
+Millet,2025,Exports,0.0
+Oats,2006,Exports,66.0
+Oats,2011,Exports,56.0
+Oats,2014,Exports,87.0
+Oats,2016,Exports,110.0
+Oats,2018,Exports,28.0
+Oats,2019,Exports,17.0
+Oats,2020,Exports,11.0
+Oats,2021,Exports,19.0
+Oats,2022,Exports,13.0
+Oats,2023,Exports,5.0
+Oats,2024,Exports,12.0
+Oats,2025,Exports,45.0
+"Rice, Milled",2006,Exports,9.0
+"Rice, Milled",2009,Exports,0.0
+"Rice, Milled",2011,Exports,0.0
+"Rice, Milled",2012,Exports,0.0
+"Rice, Milled",2013,Exports,24.0
+"Rice, Milled",2015,Exports,33.0
+"Rice, Milled",2019,Exports,4.0
+"Rice, Milled",2021,Exports,12.0
+"Rice, Milled",2024,Exports,6.0
+"Rice, Milled",2025,Exports,0.0
+Rye,2006,Exports,678.0
+Rye,2011,Exports,768.0
+Rye,2016,Exports,216.0
+Rye,2018,Exports,12.0
+Rye,2021,Exports,134.0
+Rye,2022,Exports,17.0
+Rye,2024,Exports,162.0
+Rye,2025,Exports,45.0
+Sorghum,2013,Exports,351.0
+Sorghum,2016,Exports,509.0
+Sorghum,2019,Exports,499.0
+Sorghum,2020,Exports,145.0
+Sorghum,2021,Exports,59.0
+Sorghum,2023,Exports,138.0
+Sorghum,2024,Exports,36.0
+Sorghum,2025,Exports,90.0
+Wheat,2006,Exports,13987.0
+Wheat,2010,Exports,18781.0
+Wheat,2011,Exports,37906.0
+Wheat,2017,Exports,4302.0
+Wheat,2020,Exports,33650.0
+Wheat,2022,Exports,35538.0
+Wheat,2023,Exports,17775.0
+Wheat,2025,Exports,140929.0

@@ -1,0 +1,80 @@
+Commodity_Description,Calendar_Year,Attribute_Description,Value
+Barley,2006,Yield,37.18
+Barley,2010,Yield,2.5
+Barley,2011,Yield,9.63
+Barley,2017,Yield,11.95
+Barley,2018,Yield,11.45
+Barley,2019,Yield,3.28
+Barley,2021,Yield,2.96
+Barley,2022,Yield,3.42
+Barley,2023,Yield,6.78
+Barley,2025,Yield,14.1
+Corn,2006,Yield,50.12
+Corn,2011,Yield,11.64
+Corn,2015,Yield,7.640000000000001
+Corn,2017,Yield,31.84
+Corn,2019,Yield,6.15
+Corn,2020,Yield,32.78
+Corn,2021,Yield,5.62
+Corn,2023,Yield,7.68
+Corn,2025,Yield,28.21
+Millet,2006,Yield,22.71
+Millet,2011,Yield,10.02
+Millet,2013,Yield,2.81
+Millet,2014,Yield,1.31
+Millet,2015,Yield,1.8
+Millet,2016,Yield,1.88
+Millet,2018,Yield,3.27
+Millet,2019,Yield,1.47
+Millet,2020,Yield,1.81
+Millet,2021,Yield,1.6
+Millet,2022,Yield,2.35
+Millet,2023,Yield,1.8
+Millet,2024,Yield,2.26
+Millet,2025,Yield,3.54
+Oats,2006,Yield,27.689999999999998
+Oats,2011,Yield,10.67
+Oats,2014,Yield,5.72
+Oats,2016,Yield,13.85
+Oats,2018,Yield,2.38
+Oats,2019,Yield,4.45
+Oats,2020,Yield,2.32
+Oats,2021,Yield,2.54
+Oats,2022,Yield,2.61
+Oats,2023,Yield,2.47
+Oats,2024,Yield,2.53
+Oats,2025,Yield,5.27
+"Rice, Milled",2006,Yield,72.2
+"Rice, Milled",2009,Yield,4.55
+"Rice, Milled",2011,Yield,15.86
+"Rice, Milled",2012,Yield,5.1
+"Rice, Milled",2013,Yield,5.63
+"Rice, Milled",2015,Yield,12.120000000000001
+"Rice, Milled",2019,Yield,15.77
+"Rice, Milled",2021,Yield,15.73
+"Rice, Milled",2024,Yield,15.350000000000001
+"Rice, Milled",2025,Yield,16.0
+Rye,2006,Yield,26.26
+Rye,2011,Yield,16.71
+Rye,2016,Yield,15.53
+Rye,2018,Yield,2.72
+Rye,2021,Yield,8.530000000000001
+Rye,2022,Yield,3.28
+Rye,2024,Yield,3.43
+Rye,2025,Yield,12.43
+Sorghum,2013,Yield,10.4
+Sorghum,2016,Yield,6.970000000000001
+Sorghum,2019,Yield,14.98
+Sorghum,2020,Yield,4.09
+Sorghum,2021,Yield,2.28
+Sorghum,2023,Yield,6.79
+Sorghum,2024,Yield,3.0
+Sorghum,2025,Yield,4.6
+Wheat,2006,Yield,36.03
+Wheat,2010,Yield,13.07
+Wheat,2011,Yield,19.119999999999997
+Wheat,2017,Yield,2.68
+Wheat,2020,Yield,13.47
+Wheat,2022,Yield,7.98
+Wheat,2023,Yield,4.06
+Wheat,2025,Yield,33.59
