@@ -15,20 +15,14 @@ function createVisualization(exportsData, yieldData) {
     }
     
 
-    const year = '2023'; // Example year, can be parameterized later
-
-    // Group data by Commodity_Description
-    // Ensure data is properly grouped by Commodity_Description
-    const groupedExports = d3.group(exportsData.filter(d => d.Commodity_Description), d => d.Commodity_Description);
-    const groupedYield = d3.group(
-        yieldData.filter(d => d.Commodity_Description && d.Calendar_Year === year),
-        d => d.Commodity_Description
-    );
-
-    // Create a simple visualization for exports and yield
-    const svgWidth = 800;
+    // Draw stalks for years 2015 to 2025
+    const years = d3.range(2015, 2026);
+    const svgWidth = 80 * years.length + 100;
     const svgHeight = 600;
     const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+    // Clear previous SVG if any
+    container.selectAll('svg').remove();
 
     const svg = container.append('svg')
         .attr('width', svgWidth)
@@ -39,23 +33,55 @@ function createVisualization(exportsData, yieldData) {
 
     const chart = svg.append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
-        // Define crop color mapping
-        const cropColors = {
-            'Wheat': '#FFD700',      // Golden/Yellow
-            'Barley': '#D2B48C',     // Light Brown
-            'Corn': '#FFA500',         // Orange
-            'Millet': '#BDB76B',       // Dark Khaki
-            'Oats': '#C0C0C0',         // Silver/Gray
-            'Rye': '#8B4513',          // SaddleBrown
-            'Rice, Milled': '#FFF8DC', // Cornsilk/Off-white
-            'Sorghum': '#A0522D',      // Sienna
-            // Add more crops and colors as needed
-        };
+
+    // Crop color mapping
+    const cropColors = {
+        'Wheat': '#FFD700',
+        'Barley': '#D2B48C',
+        'Corn': '#FFA500',
+        'Millet': '#BDB76B',
+        'Oats': '#C0C0C0',
+        'Rye': '#8B4513',
+        'Rice, Milled': '#FFF8DC',
+        'Sorghum': '#A0522D',
+        // Add more crops and colors as needed
+    };
+
+    // Find max exports for scaling
+    let maxExports = 0;
+    years.forEach(year => {
+        const groupedExports = d3.group(
+            exportsData.filter(d => d.Commodity_Description && d.Calendar_Year === String(year)),
+            d => d.Commodity_Description
+        );
+        const totalExports = d3.sum(
+            Array.from(groupedExports.values()).flat(),
+            d => +d.Value || 0
+        );
+        if (totalExports > maxExports) maxExports = totalExports;
+    });
+    maxExports = Math.max(maxExports, 10000); // Avoid division by zero
+
+    years.forEach((year, idx) => {
+        // Group data by Commodity_Description for this year
+        const groupedExports = d3.group(
+            exportsData.filter(d => d.Commodity_Description && d.Calendar_Year === String(year)),
+            d => d.Commodity_Description
+        );
+        const groupedYield = d3.group(
+            yieldData.filter(d => d.Commodity_Description && d.Calendar_Year === String(year)),
+            d => d.Commodity_Description
+        );
+
+        // Calculate total exports for the year (unit: 1000 MT)
+        const totalExports = d3.sum(
+            Array.from(groupedExports.values()).flat(),
+            d => +d.Value || 0
+        );
 
         // Calculate total yield for each crop using groupedYield
         const cropYields = {};
         groupedYield.forEach((records, crop) => {
-            // records is an array of yield records for this crop
             const totalCropYield = d3.sum(records, d => +d.Value || 0);
             cropYields[crop] = totalCropYield;
         });
@@ -68,23 +94,22 @@ function createVisualization(exportsData, yieldData) {
                 leaves.push({ crop });
             }
         });
-
-        // Sort leaves by crop for grouping colors
         leaves = leaves.sort((a, b) => a.crop.localeCompare(b.crop));
 
-        console.log('Leaves data:', leaves);
-
-        // Wheat stalk parameters
-        const stalkHeight = chartHeight * 0.7;
+        // Stalk height is proportional to total exports (max chartHeight)
+        const stalkHeight = Math.max(40, Math.min(chartHeight * (totalExports / maxExports), chartHeight));
         const stalkWidth = 3;
         const stalkColor = '#FFD700';
 
-        // Create a group for the wheat stalk
-        const wheatStalkGroup = chart.append('g')
-            .attr('transform', `translate(${chartWidth / 2}, ${chartHeight - stalkHeight})`);
+        // X position for this stalk
+        const x = idx * 80 + 40;
+
+        // Create a group for the stalk
+        const stalkGroup = chart.append('g')
+            .attr('transform', `translate(${x}, ${chartHeight - stalkHeight})`);
 
         // Draw the stalk
-        wheatStalkGroup.append('rect')
+        stalkGroup.append('rect')
             .attr('x', -stalkWidth / 2)
             .attr('y', 0)
             .attr('width', stalkWidth)
@@ -95,24 +120,21 @@ function createVisualization(exportsData, yieldData) {
         const leafWidth = 20;
         const leafHeight = 30;
         const leavesPerStalk = leaves.length;
-        const leafSpacing = stalkHeight / (leavesPerStalk * 1.3);
+        const leafSpacing = stalkHeight / (leavesPerStalk * 1.3 || 1);
         const rotationAngle = 140;
         const leafOffsetX = stalkWidth;
 
         leaves.forEach((leaf, i) => {
             const leafY = i * leafSpacing;
-            // Alternate left/right
             if (i % 2 === 0) {
-                // Left side leaf
-                wheatStalkGroup.append('path')
+                stalkGroup.append('path')
                     .attr('d', `M${-leafOffsetX},${leafY} Q${-leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY + leafHeight} Q${-leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY}`)
                     .attr('fill', cropColors[leaf.crop] || stalkColor)
                     .attr('transform', `rotate(${-rotationAngle}, ${-leafOffsetX}, ${leafY})`)
                     .append('title')
                     .text(leaf.crop);
             } else {
-                // Right side leaf
-                wheatStalkGroup.append('path')
+                stalkGroup.append('path')
                     .attr('d', `M${leafOffsetX},${leafY} Q${leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY + leafHeight} Q${leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY}`)
                     .attr('fill', cropColors[leaf.crop] || stalkColor)
                     .attr('transform', `rotate(${rotationAngle}, ${leafOffsetX}, ${leafY})`)
@@ -120,6 +142,15 @@ function createVisualization(exportsData, yieldData) {
                     .text(leaf.crop);
             }
         });
+
+        // Year label
+        chart.append('text')
+            .attr('x', x)
+            .attr('y', chartHeight + 25)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', 14)
+            .text(year);
+    });
 }
 
 
