@@ -23,10 +23,11 @@ function createVisualization(exportsData, yieldData) {
 
     // Clear previous SVG if any
     container.selectAll('svg').remove();
+    container.selectAll('.crop-legend').remove();
 
     const svg = container.append('svg')
         .attr('width', svgWidth)
-        .attr('height', svgHeight);
+        .attr('height', svgHeight)
 
     const chartWidth = svgWidth - margin.left - margin.right;
     const chartHeight = svgHeight - margin.top - margin.bottom;
@@ -65,6 +66,117 @@ function createVisualization(exportsData, yieldData) {
         // Add more crops and colors as needed
     };
 
+    // --- Add Crop Legend ---
+    // Get all crops present in the data
+    const allCropsSet = new Set();
+    exportsData.forEach(d => {
+        if (d.Commodity_Description) allCropsSet.add(d.Commodity_Description);
+    });
+    yieldData.forEach(d => {
+        if (d.Commodity_Description) allCropsSet.add(d.Commodity_Description);
+    });
+    const allCrops = Array.from(allCropsSet).sort();
+
+    // Legend container (as a div for easier styling)
+    const legend = container.append('div')
+        .attr('class', 'crop-legend')
+        .style('position', 'absolute')
+        .style('top', `${svgHeight + 200}px`)
+        // .style('left', `${svgWidth}px`)
+        .style('background', '#fff')
+        .style('border', '1px solid #ccc')
+        .style('border-radius', '8px')
+        .style('padding', '12px 18px 12px 14px')
+        .style('box-shadow', '0 2px 8px rgba(0,0,0,0.07)')
+        .style('font-family', 'Segoe UI, Arial, sans-serif')
+        .style('font-size', '15px')
+        .style('z-index', 10)
+        .style('cursor', 'move');
+
+    // --- Legend Dragging ---
+    let dragOffset = { x: 0, y: 0 };
+    let isDragging = false;
+
+    legend.on('mousedown', function(event) {
+        // Only drag if not clicking the minimize button
+        if (event.target.classList.contains('legend-min-btn')) return;
+        isDragging = true;
+        const rect = legend.node().getBoundingClientRect();
+        dragOffset.x = event.clientX - rect.left;
+        dragOffset.y = event.clientY - rect.top;
+        d3.select(window)
+            .on('mousemove.legenddrag', function(event) {
+                if (isDragging) {
+                    legend.style('left', (event.clientX - dragOffset.x) + 'px')
+                          .style('top', (event.clientY - dragOffset.y) + 'px');
+                }
+            })
+            .on('mouseup.legenddrag', function() {
+                isDragging = false;
+                d3.select(window).on('mousemove.legenddrag', null).on('mouseup.legenddrag', null);
+            });
+        event.preventDefault();
+    });
+
+    // --- Minimize Button ---
+    const legendHeader = legend.append('div')
+        .style('display', 'flex')
+        .style('align-items', 'center')
+        .style('justify-content', 'space-between')
+        .style('margin-bottom', '8px');
+
+    legendHeader.append('span')
+        .style('font-weight', 'bold')
+        .text('Crop Legend');
+
+    legendHeader.append('button')
+        .attr('class', 'legend-min-btn')
+        .attr('title', 'Minimize legend')
+        .style('margin-left', '10px')
+        .style('background', 'none')
+        .style('border', 'none')
+        .style('font-size', '18px')
+        .style('cursor', 'pointer')
+        .style('color', '#888')
+        .html('-') // en dash as minimize icon
+        .on('click', function(event) {
+            event.stopPropagation();
+            const isMin = legend.classed('minimized');
+            if (!isMin) {
+                legend.classed('minimized', true);
+                legendList.style('display', 'none');
+                d3.select(this).html('+').attr('title', 'Restore legend'); // open square
+            } else {
+                legend.classed('minimized', false);
+                legendList.style('display', null);
+                d3.select(this).html('-').attr('title', 'Minimize legend');
+            }
+        });
+
+    const legendList = legend.append('ul')
+        .style('list-style', 'none')
+        .style('margin', 0)
+        .style('padding', 0);
+
+    allCrops.forEach(crop => {
+        const color = cropColors[crop] || '#888';
+        const item = legendList.append('li')
+            .style('display', 'flex')
+            .style('align-items', 'center')
+            .style('margin-bottom', '5px');
+        item.append('span')
+            .style('display', 'inline-block')
+            .style('width', '18px')
+            .style('height', '18px')
+            .style('margin-right', '8px')
+            .style('border-radius', '4px')
+            .style('background', color)
+            .style('border', '1px solid #bbb');
+        item.append('span')
+            .text(crop);
+    });
+    // --- End Crop Legend ---
+
     // Find max exports for scaling
     let maxExports = 0;
     years.forEach(year => {
@@ -85,14 +197,14 @@ function createVisualization(exportsData, yieldData) {
         let html = `<strong>Year:</strong> ${year}<br>`;
         if (cropFilter) {
             html += `<strong>Crop:</strong> <span style="color:${cropColors[cropFilter] || '#888'}">${cropFilter}</span><br>`;
-            html += `<strong>Yield:</strong> ${d3.format(',')(cropYields[cropFilter] || 0)} (1000 MT)<br>`;
+            html += `<strong>Yield:</strong> ${d3.format('.2f')(cropYields[cropFilter] || 0)} (MT/HA)<br>`;
             html += `<strong>Exports:</strong> ${d3.format(',')(cropExports[cropFilter] || 0)} (1000 MT)<br>`;
         } else {
-            html += `<strong>Total Yield:</strong> ${d3.format(',')(totalYield)} (1000 MT)<br>`;
+            html += `<strong>Total Yield (avg):</strong> ${d3.format('.2f')(totalYield)} (MT/HA)<br>`;
             html += `<strong>Total Exports:</strong> ${d3.format(',')(totalExports)} (1000 MT)<br>`;
             html += `<strong>Crop Yields:</strong><ul style="margin:0 0 0 18px;padding:0">`;
             Object.entries(cropYields).forEach(([crop, val]) => {
-                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
+                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format('.2f')(val)} (MT/HA)</li>`;
             });
             html += `</ul>`;
             html += `<strong>Crop Exports:</strong><ul style="margin:0 0 0 18px;padding:0">`;
@@ -132,17 +244,20 @@ function createVisualization(exportsData, yieldData) {
             d => +d.Value || 0
         );
 
-        // Calculate total yield for the year (unit: 1000 MT)
-        const totalYield = d3.sum(
-            Array.from(groupedYield.values()).flat(),
-            d => +d.Value || 0
-        );
+        // Calculate average yield for the year (unit: MT/HA)
+        let yieldVals = [];
+        groupedYield.forEach((records, crop) => {
+            records.forEach(d => {
+                if (+d.Value) yieldVals.push(+d.Value);
+            });
+        });
+        const totalYield = yieldVals.length ? d3.mean(yieldVals) : 0;
 
-        // Calculate total yield for each crop using groupedYield
+        // Calculate average yield for each crop using groupedYield
         const cropYields = {};
         groupedYield.forEach((records, crop) => {
-            const totalCropYield = d3.sum(records, d => +d.Value || 0);
-            cropYields[crop] = totalCropYield;
+            const avgCropYield = d3.mean(records, d => +d.Value || 0);
+            cropYields[crop] = avgCropYield || 0;
         });
 
         // Calculate total exports for each crop using groupedExports
@@ -152,10 +267,10 @@ function createVisualization(exportsData, yieldData) {
             cropExports[crop] = totalCropExport;
         });
 
-        // Prepare leaves data array based on absolute yield value (1 leaf per 1000 MT)
+        // Prepare leaves data array based on yield value (1 leaf per 1 MT/HA, rounded down)
         let leaves = [];
         Object.entries(cropYields).forEach(([crop, yieldVal]) => {
-            const count = Math.floor(yieldVal); // 1 leaf per 1000 MT
+            const count = Math.floor(yieldVal); // 1 leaf per 1 MT/HA
             for (let i = 0; i < count; i++) {
                 leaves.push({ crop });
             }
@@ -199,7 +314,7 @@ function createVisualization(exportsData, yieldData) {
                 }
             });
 
-        // Draw leaves (absolute, 1 per 1000 MT)
+        // Draw leaves (absolute, 1 per 1 MT/HA)
         const leafWidth = 20;
         const leafHeight = 30;
         const leavesPerStalk = leaves.length;
@@ -304,6 +419,7 @@ function createVisualization(exportsData, yieldData) {
             .attr('y', chartHeight + 25)
             .attr('text-anchor', 'middle')
             .attr('font-size', 14)
+            .attr('font-family', 'Segoe UI, Arial, sans-serif')
             .text(year);
     });
 }
