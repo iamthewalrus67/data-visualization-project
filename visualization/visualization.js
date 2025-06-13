@@ -18,7 +18,7 @@ function createVisualization(exportsData, yieldData) {
     // Draw stalks for years 2015 to 2025
     const years = d3.range(2015, 2026);
     const svgWidth = 80 * years.length + 100;
-    const svgHeight = 600;
+    const svgHeight = 700;
     const margin = { top: 20, right: 30, bottom: 40, left: 50 };
 
     // Clear previous SVG if any
@@ -27,7 +27,12 @@ function createVisualization(exportsData, yieldData) {
 
     const svg = container.append('svg')
         .attr('width', svgWidth)
-        .attr('height', svgHeight)
+        .attr('height', svgHeight);
+        // .style('background', 'rgba(247, 242, 171, 0.95)')
+        // .style('border', '1px solid #ccc')
+        // .style('border-radius', '8px')
+        // .style('padding', '10px')
+        // .style('box-shadow', '0 2px 8px rgba(0,0,0,0.07)');
 
     const chartWidth = svgWidth - margin.left - margin.right;
     const chartHeight = svgHeight - margin.top - margin.bottom;
@@ -42,12 +47,13 @@ function createVisualization(exportsData, yieldData) {
             .append('div')
             .attr('class', 'stalk-tooltip')
             .style('position', 'absolute')
-            .style('background', 'rgba(255,255,255,0.95)')
+            .style('background', 'rgba(255, 252, 214, 0.95)')
             .style('border', '1px solid #ccc')
             .style('padding', '8px 12px')
             .style('border-radius', '6px')
             .style('pointer-events', 'none')
             .style('font-size', '14px')
+            .style('font-family', 'Arial, sans-serif')
             .style('color', '#222')
             .style('display', 'none')
             .style('z-index', 1000);
@@ -83,12 +89,12 @@ function createVisualization(exportsData, yieldData) {
         .style('position', 'absolute')
         .style('top', `${svgHeight + 200}px`)
         // .style('left', `${svgWidth}px`)
-        .style('background', '#fff')
+        .style('background', 'rgba(255, 252, 214, 0.95)')
         .style('border', '1px solid #ccc')
         .style('border-radius', '8px')
         .style('padding', '12px 18px 12px 14px')
         .style('box-shadow', '0 2px 8px rgba(0,0,0,0.07)')
-        .style('font-family', 'Segoe UI, Arial, sans-serif')
+        .style('font-family', 'Arial, sans-serif')
         .style('font-size', '15px')
         .style('z-index', 10)
         .style('cursor', 'move');
@@ -197,19 +203,19 @@ function createVisualization(exportsData, yieldData) {
         let html = `<strong>Year:</strong> ${year}<br>`;
         if (cropFilter) {
             html += `<strong>Crop:</strong> <span style="color:${cropColors[cropFilter] || '#888'}">${cropFilter}</span><br>`;
-            html += `<strong>Yield:</strong> ${d3.format('.2f')(cropYields[cropFilter] || 0)} (MT/HA)<br>`;
-            html += `<strong>Exports:</strong> ${d3.format(',')(cropExports[cropFilter] || 0)} (1000 MT)<br>`;
+            html += `<strong>Yield (MT/HA):</strong> ${d3.format('.2f')(cropYields[cropFilter] || 0)}<br>`;
+            html += `<strong>Exports (1000 MT):</strong> ${d3.format(',')(cropExports[cropFilter] || 0)}<br>`;
         } else {
-            html += `<strong>Total Yield (avg):</strong> ${d3.format('.2f')(totalYield)} (MT/HA)<br>`;
-            html += `<strong>Total Exports:</strong> ${d3.format(',')(totalExports)} (1000 MT)<br>`;
-            html += `<strong>Crop Yields:</strong><ul style="margin:0 0 0 18px;padding:0">`;
+            html += `<strong>Total Yield (MT/HA) (avg):</strong> ${d3.format('.2f')(totalYield)}<br>`;
+            html += `<strong>Total Exports (1000 MT):</strong> ${d3.format(',')(totalExports)}<br>`;
+            html += `<strong>Crop Yields (MT/HA):</strong><ul style="margin:0 0 0 18px;padding:0">`;
             Object.entries(cropYields).forEach(([crop, val]) => {
-                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format('.2f')(val)} (MT/HA)</li>`;
+                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format('.2f')(val)}</li>`;
             });
             html += `</ul>`;
-            html += `<strong>Crop Exports:</strong><ul style="margin:0 0 0 18px;padding:0">`;
+            html += `<strong>Crop Exports (1000 MT):</strong><ul style="margin:0 0 0 18px;padding:0">`;
             Object.entries(cropExports).forEach(([crop, val]) => {
-                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
+                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)}</li>`;
             });
             html += `</ul>`;
         }
