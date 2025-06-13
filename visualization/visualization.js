@@ -34,6 +34,24 @@ function createVisualization(exportsData, yieldData) {
     const chart = svg.append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
+    // Tooltip div
+    let tooltip = d3.select('body').select('.stalk-tooltip');
+    if (tooltip.empty()) {
+        tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'stalk-tooltip')
+            .style('position', 'absolute')
+            .style('background', 'rgba(255,255,255,0.95)')
+            .style('border', '1px solid #ccc')
+            .style('padding', '8px 12px')
+            .style('border-radius', '6px')
+            .style('pointer-events', 'none')
+            .style('font-size', '14px')
+            .style('color', '#222')
+            .style('display', 'none')
+            .style('z-index', 1000);
+    }
+
     // Crop color mapping
     const cropColors = {
         'Wheat': '#FFD700',
@@ -62,6 +80,31 @@ function createVisualization(exportsData, yieldData) {
     });
     maxExports = Math.max(maxExports, 10000); // Avoid division by zero
 
+    // Helper to show tooltip
+    function showTooltip(event, year, totalYield, totalExports, cropYields, cropExports) {
+        let html = `<strong>Year:</strong> ${year}<br>`;
+        html += `<strong>Total Yield:</strong> ${d3.format(',')(totalYield)} (1000 MT)<br>`;
+        html += `<strong>Total Exports:</strong> ${d3.format(',')(totalExports)} (1000 MT)<br>`;
+        html += `<strong>Crop Yields:</strong><ul style="margin:0 0 0 18px;padding:0">`;
+        Object.entries(cropYields).forEach(([crop, val]) => {
+            html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
+        });
+        html += `</ul>`;
+        html += `<strong>Crop Exports:</strong><ul style="margin:0 0 0 18px;padding:0">`;
+        Object.entries(cropExports).forEach(([crop, val]) => {
+            html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
+        });
+        html += `</ul>`;
+        tooltip.html(html)
+            .style('display', 'block')
+            .style('left', (event.pageX + 15) + 'px')
+            .style('top', (event.pageY - 20) + 'px');
+    }
+
+    function hideTooltip() {
+        tooltip.style('display', 'none');
+    }
+
     years.forEach((year, idx) => {
         // Group data by Commodity_Description for this year
         const groupedExports = d3.group(
@@ -79,11 +122,24 @@ function createVisualization(exportsData, yieldData) {
             d => +d.Value || 0
         );
 
+        // Calculate total yield for the year (unit: 1000 MT)
+        const totalYield = d3.sum(
+            Array.from(groupedYield.values()).flat(),
+            d => +d.Value || 0
+        );
+
         // Calculate total yield for each crop using groupedYield
         const cropYields = {};
         groupedYield.forEach((records, crop) => {
             const totalCropYield = d3.sum(records, d => +d.Value || 0);
             cropYields[crop] = totalCropYield;
+        });
+
+        // Calculate total exports for each crop using groupedExports
+        const cropExports = {};
+        groupedExports.forEach((records, crop) => {
+            const totalCropExport = d3.sum(records, d => +d.Value || 0);
+            cropExports[crop] = totalCropExport;
         });
 
         // Prepare leaves data array based on absolute yield value (1 leaf per 1000 MT)
@@ -108,13 +164,24 @@ function createVisualization(exportsData, yieldData) {
         const stalkGroup = chart.append('g')
             .attr('transform', `translate(${x}, ${chartHeight - stalkHeight})`);
 
-        // Draw the stalk
+        // Draw the stalk (add mouse events for tooltip)
         stalkGroup.append('rect')
             .attr('x', -stalkWidth / 2)
             .attr('y', 0)
             .attr('width', stalkWidth)
             .attr('height', stalkHeight)
-            .attr('fill', stalkColor);
+            .attr('fill', stalkColor)
+            .on('mouseover', function (event) {
+                showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
+            })
+            .on('mousemove', function (event) {
+                tooltip
+                    .style('left', (event.pageX + 15) + 'px')
+                    .style('top', (event.pageY - 20) + 'px');
+            })
+            .on('mouseleave', function () {
+                hideTooltip();
+            });
 
         // Draw leaves (absolute, 1 per 1000 MT)
         const leafWidth = 20;
@@ -126,21 +193,33 @@ function createVisualization(exportsData, yieldData) {
 
         leaves.forEach((leaf, i) => {
             const leafY = i * leafSpacing;
+            let leafPath;
             if (i % 2 === 0) {
-                stalkGroup.append('path')
+                leafPath = stalkGroup.append('path')
                     .attr('d', `M${-leafOffsetX},${leafY} Q${-leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY + leafHeight} Q${-leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY}`)
                     .attr('fill', cropColors[leaf.crop] || stalkColor)
-                    .attr('transform', `rotate(${-rotationAngle}, ${-leafOffsetX}, ${leafY})`)
-                    .append('title')
-                    .text(leaf.crop);
+                    .attr('transform', `rotate(${-rotationAngle}, ${-leafOffsetX}, ${leafY})`);
             } else {
-                stalkGroup.append('path')
+                leafPath = stalkGroup.append('path')
                     .attr('d', `M${leafOffsetX},${leafY} Q${leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY + leafHeight} Q${leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY}`)
                     .attr('fill', cropColors[leaf.crop] || stalkColor)
-                    .attr('transform', `rotate(${rotationAngle}, ${leafOffsetX}, ${leafY})`)
-                    .append('title')
-                    .text(leaf.crop);
+                    .attr('transform', `rotate(${rotationAngle}, ${leafOffsetX}, ${leafY})`);
             }
+            leafPath.append('title').text(leaf.crop);
+
+            // Add tooltip events to leaves
+            leafPath
+                .on('mouseover', function (event) {
+                    showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
+                })
+                .on('mousemove', function (event) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 20) + 'px');
+                })
+                .on('mouseleave', function () {
+                    hideTooltip();
+                });
         });
 
         // Year label
