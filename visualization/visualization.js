@@ -28,11 +28,6 @@ function createVisualization(exportsData, yieldData) {
     const svg = container.append('svg')
         .attr('width', svgWidth)
         .attr('height', svgHeight);
-        // .style('background', 'rgba(247, 242, 171, 0.95)')
-        // .style('border', '1px solid #ccc')
-        // .style('border-radius', '8px')
-        // .style('padding', '10px')
-        // .style('box-shadow', '0 2px 8px rgba(0,0,0,0.07)');
 
     const chartWidth = svgWidth - margin.left - margin.right;
     const chartHeight = svgHeight - margin.top - margin.bottom;
@@ -88,7 +83,6 @@ function createVisualization(exportsData, yieldData) {
         .attr('class', 'crop-legend')
         .style('position', 'absolute')
         .style('top', `${svgHeight + 200}px`)
-        // .style('left', `${svgWidth}px`)
         .style('background', 'rgba(255, 252, 214, 0.95)')
         .style('border', '1px solid #ccc')
         .style('border-radius', '8px')
@@ -302,6 +296,8 @@ function createVisualization(exportsData, yieldData) {
             .attr('width', stalkWidth)
             .attr('height', stalkHeight)
             .attr('fill', stalkColor)
+            .attr('stroke', '#555')
+            .attr('stroke-width', 0.3)
             .on('mouseover', function (event) {
                 if (!selectedLeafGroup) {
                     showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
@@ -346,11 +342,15 @@ function createVisualization(exportsData, yieldData) {
                     leafPath = cropLeafGroup.append('path')
                         .attr('d', `M${-leafOffsetX},${leafY} Q${-leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY + leafHeight} Q${-leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY}`)
                         .attr('fill', cropColors[leaf.crop] || stalkColor)
+                        .attr('stroke', '#555') // <-- border color for all leaves
+                        .attr('stroke-width', 0.4)
                         .attr('transform', `rotate(${-rotationAngle}, ${-leafOffsetX}, ${leafY})`);
                 } else {
                     leafPath = cropLeafGroup.append('path')
                         .attr('d', `M${leafOffsetX},${leafY} Q${leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY + leafHeight} Q${leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY}`)
                         .attr('fill', cropColors[leaf.crop] || stalkColor)
+                        .attr('stroke', '#555') // <-- border color for all leaves
+                        .attr('stroke-width', 0.4)
                         .attr('transform', `rotate(${rotationAngle}, ${leafOffsetX}, ${leafY})`);
                 }
                 leafPath.append('title').text(leaf.crop);
@@ -385,20 +385,20 @@ function createVisualization(exportsData, yieldData) {
                         selectedCrop = null;
                         hideTooltip();
                         d3.select(this).selectAll('path')
-                            .attr('stroke', null)
-                            .attr('stroke-width', null);
+                            .attr('stroke', '#555')
+                            .attr('stroke-width', 1.2);
                     } else {
                         // Deselect previous
                         if (selectedLeafGroup) {
                             d3.select(selectedLeafGroup).selectAll('path')
-                                .attr('stroke', null)
-                                .attr('stroke-width', null);
+                                .attr('stroke', '#555')
+                                .attr('stroke-width', 1.2);
                         }
                         selectedLeafGroup = this;
                         selectedCrop = crop;
                         d3.selectAll('.crop-leaf-group').selectAll('path')
-                            .attr('stroke', null)
-                            .attr('stroke-width', null);
+                            .attr('stroke', '#555')
+                            .attr('stroke-width', 1.2);
                         d3.select(this).selectAll('path')
                             .attr('stroke', '#222')
                             .attr('stroke-width', 2);
@@ -411,8 +411,8 @@ function createVisualization(exportsData, yieldData) {
         svg.on('click', function () {
             if (selectedLeafGroup) {
                 d3.select(selectedLeafGroup).selectAll('path')
-                    .attr('stroke', null)
-                    .attr('stroke-width', null);
+                    .attr('stroke', '#555')
+                    .attr('stroke-width', 1.2);
                 selectedLeafGroup = null;
                 selectedCrop = null;
                 hideTooltip();
