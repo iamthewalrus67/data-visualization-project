@@ -2,8 +2,8 @@
 
 // Load CSV data from the data folder using D3.js
 const csvFiles = [
-    '../data/exports_data.csv',
-    '../data/yield_data.csv'
+    'data/exports_data.csv',
+    'data/yield_data.csv'
 ];
 
 // Example function to create a basic visualization using D3.js
