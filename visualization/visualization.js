@@ -81,20 +81,26 @@ function createVisualization(exportsData, yieldData) {
     maxExports = Math.max(maxExports, 10000); // Avoid division by zero
 
     // Helper to show tooltip
-    function showTooltip(event, year, totalYield, totalExports, cropYields, cropExports) {
+    function showTooltip(event, year, totalYield, totalExports, cropYields, cropExports, cropFilter) {
         let html = `<strong>Year:</strong> ${year}<br>`;
-        html += `<strong>Total Yield:</strong> ${d3.format(',')(totalYield)} (1000 MT)<br>`;
-        html += `<strong>Total Exports:</strong> ${d3.format(',')(totalExports)} (1000 MT)<br>`;
-        html += `<strong>Crop Yields:</strong><ul style="margin:0 0 0 18px;padding:0">`;
-        Object.entries(cropYields).forEach(([crop, val]) => {
-            html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
-        });
-        html += `</ul>`;
-        html += `<strong>Crop Exports:</strong><ul style="margin:0 0 0 18px;padding:0">`;
-        Object.entries(cropExports).forEach(([crop, val]) => {
-            html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
-        });
-        html += `</ul>`;
+        if (cropFilter) {
+            html += `<strong>Crop:</strong> <span style="color:${cropColors[cropFilter] || '#888'}">${cropFilter}</span><br>`;
+            html += `<strong>Yield:</strong> ${d3.format(',')(cropYields[cropFilter] || 0)} (1000 MT)<br>`;
+            html += `<strong>Exports:</strong> ${d3.format(',')(cropExports[cropFilter] || 0)} (1000 MT)<br>`;
+        } else {
+            html += `<strong>Total Yield:</strong> ${d3.format(',')(totalYield)} (1000 MT)<br>`;
+            html += `<strong>Total Exports:</strong> ${d3.format(',')(totalExports)} (1000 MT)<br>`;
+            html += `<strong>Crop Yields:</strong><ul style="margin:0 0 0 18px;padding:0">`;
+            Object.entries(cropYields).forEach(([crop, val]) => {
+                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
+            });
+            html += `</ul>`;
+            html += `<strong>Crop Exports:</strong><ul style="margin:0 0 0 18px;padding:0">`;
+            Object.entries(cropExports).forEach(([crop, val]) => {
+                html += `<li><span style="color:${cropColors[crop] || '#888'}">&#9632;</span> ${crop}: ${d3.format(',')(val)} (1000 MT)</li>`;
+            });
+            html += `</ul>`;
+        }
         tooltip.html(html)
             .style('display', 'block')
             .style('left', (event.pageX + 15) + 'px')
@@ -104,6 +110,10 @@ function createVisualization(exportsData, yieldData) {
     function hideTooltip() {
         tooltip.style('display', 'none');
     }
+
+    // Track selected crop group for toggling
+    let selectedLeafGroup = null;
+    let selectedCrop = null;
 
     years.forEach((year, idx) => {
         // Group data by Commodity_Description for this year
@@ -172,15 +182,21 @@ function createVisualization(exportsData, yieldData) {
             .attr('height', stalkHeight)
             .attr('fill', stalkColor)
             .on('mouseover', function (event) {
-                showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
+                if (!selectedLeafGroup) {
+                    showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
+                }
             })
             .on('mousemove', function (event) {
-                tooltip
-                    .style('left', (event.pageX + 15) + 'px')
-                    .style('top', (event.pageY - 20) + 'px');
+                if (!selectedLeafGroup) {
+                    tooltip
+                        .style('left', (event.pageX + 15) + 'px')
+                        .style('top', (event.pageY - 20) + 'px');
+                }
             })
             .on('mouseleave', function () {
-                hideTooltip();
+                if (!selectedLeafGroup) {
+                    hideTooltip();
+                }
             });
 
         // Draw leaves (absolute, 1 per 1000 MT)
@@ -191,26 +207,44 @@ function createVisualization(exportsData, yieldData) {
         const rotationAngle = 140;
         const leafOffsetX = stalkWidth;
 
-        leaves.forEach((leaf, i) => {
-            const leafY = i * leafSpacing;
-            let leafPath;
-            if (i % 2 === 0) {
-                leafPath = stalkGroup.append('path')
-                    .attr('d', `M${-leafOffsetX},${leafY} Q${-leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY + leafHeight} Q${-leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY}`)
-                    .attr('fill', cropColors[leaf.crop] || stalkColor)
-                    .attr('transform', `rotate(${-rotationAngle}, ${-leafOffsetX}, ${leafY})`);
-            } else {
-                leafPath = stalkGroup.append('path')
-                    .attr('d', `M${leafOffsetX},${leafY} Q${leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY + leafHeight} Q${leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY}`)
-                    .attr('fill', cropColors[leaf.crop] || stalkColor)
-                    .attr('transform', `rotate(${rotationAngle}, ${leafOffsetX}, ${leafY})`);
-            }
-            leafPath.append('title').text(leaf.crop);
+        // Group leaves by crop for group selection
+        const leavesByCrop = d3.groups(leaves, d => d.crop);
 
-            // Add tooltip events to leaves
-            leafPath
+        leavesByCrop.forEach(([crop, cropLeaves]) => {
+            // Create a group for each crop's leaves
+            const cropLeafGroup = stalkGroup.append('g')
+                .attr('class', 'crop-leaf-group')
+                .attr('data-crop', crop);
+
+            cropLeaves.forEach((leaf, i) => {
+                // Find the index of this leaf in the full leaves array
+                const globalIndex = leaves.findIndex((l, idx) => l.crop === crop && leaves.slice(0, idx).filter(x => x.crop === crop).length === i);
+                const leafY = globalIndex * leafSpacing;
+                let leafPath;
+                if (globalIndex % 2 === 0) {
+                    leafPath = cropLeafGroup.append('path')
+                        .attr('d', `M${-leafOffsetX},${leafY} Q${-leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY + leafHeight} Q${-leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${-leafOffsetX},${leafY}`)
+                        .attr('fill', cropColors[leaf.crop] || stalkColor)
+                        .attr('transform', `rotate(${-rotationAngle}, ${-leafOffsetX}, ${leafY})`);
+                } else {
+                    leafPath = cropLeafGroup.append('path')
+                        .attr('d', `M${leafOffsetX},${leafY} Q${leafOffsetX + leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY + leafHeight} Q${leafOffsetX - leafWidth / 2},${leafY + leafHeight / 2} ${leafOffsetX},${leafY}`)
+                        .attr('fill', cropColors[leaf.crop] || stalkColor)
+                        .attr('transform', `rotate(${rotationAngle}, ${leafOffsetX}, ${leafY})`);
+                }
+                leafPath.append('title').text(leaf.crop);
+            });
+
+            // Add tooltip and click events to the group
+            cropLeafGroup
                 .on('mouseover', function (event) {
-                    showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
+                    if (!selectedLeafGroup) {
+                        // Show total stalk info when hovering over a leaf and nothing is selected
+                        showTooltip(event, year, totalYield, totalExports, cropYields, cropExports);
+                    } else if (selectedLeafGroup === this) {
+                        // Show crop info if this group is selected
+                        showTooltip(event, year, totalYield, totalExports, cropYields, cropExports, crop);
+                    }
                 })
                 .on('mousemove', function (event) {
                     tooltip
@@ -218,8 +252,50 @@ function createVisualization(exportsData, yieldData) {
                         .style('top', (event.pageY - 20) + 'px');
                 })
                 .on('mouseleave', function () {
-                    hideTooltip();
+                    if (!selectedLeafGroup) {
+                        hideTooltip();
+                    }
+                })
+                .on('click', function (event) {
+                    event.stopPropagation();
+                    if (selectedLeafGroup === this) {
+                        // Deselect
+                        selectedLeafGroup = null;
+                        selectedCrop = null;
+                        hideTooltip();
+                        d3.select(this).selectAll('path')
+                            .attr('stroke', null)
+                            .attr('stroke-width', null);
+                    } else {
+                        // Deselect previous
+                        if (selectedLeafGroup) {
+                            d3.select(selectedLeafGroup).selectAll('path')
+                                .attr('stroke', null)
+                                .attr('stroke-width', null);
+                        }
+                        selectedLeafGroup = this;
+                        selectedCrop = crop;
+                        d3.selectAll('.crop-leaf-group').selectAll('path')
+                            .attr('stroke', null)
+                            .attr('stroke-width', null);
+                        d3.select(this).selectAll('path')
+                            .attr('stroke', '#222')
+                            .attr('stroke-width', 2);
+                        showTooltip(event, year, totalYield, totalExports, cropYields, cropExports, crop);
+                    }
                 });
+        });
+
+        // Deselect on background click
+        svg.on('click', function () {
+            if (selectedLeafGroup) {
+                d3.select(selectedLeafGroup).selectAll('path')
+                    .attr('stroke', null)
+                    .attr('stroke-width', null);
+                selectedLeafGroup = null;
+                selectedCrop = null;
+                hideTooltip();
+            }
         });
 
         // Year label
