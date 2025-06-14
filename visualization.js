@@ -270,7 +270,7 @@ function createVisualization(exportsData, yieldData) {
         // Prepare leaves data array based on yield value (1 leaf per 1 MT/HA, rounded down)
         let leaves = [];
         Object.entries(cropYields).forEach(([crop, yieldVal]) => {
-            const count = Math.floor(yieldVal); // 1 leaf per 1 MT/HA
+            const count = Math.floor(yieldVal / 2); // 1 leaf per 2 MT/HA
             for (let i = 0; i < count; i++) {
                 leaves.push({ crop });
             }
