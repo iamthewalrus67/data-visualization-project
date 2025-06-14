@@ -26,8 +26,12 @@ function createVisualization(exportsData, yieldData) {
     container.selectAll('.crop-legend').remove();
 
     const svg = container.append('svg')
-        .attr('width', svgWidth)
-        .attr('height', svgHeight);
+        .attr('viewBox', `0 0 ${svgWidth} ${svgHeight}`)
+        .attr('width', '100%')
+        .attr('height', 'auto')
+        .style('max-width', `${svgWidth}px`)
+        .style('height', 'auto')
+        .attr('preserveAspectRatio', 'xMinYMin meet');
 
     const chartWidth = svgWidth - margin.left - margin.right;
     const chartHeight = svgHeight - margin.top - margin.bottom;
